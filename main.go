@@ -348,8 +348,9 @@ type UploadFilesResponse struct {
 // Get presigned URL for file upload
 func (ut *UtApi) GetPresignedUploadUrl(files []UploadFileInfo, acl string) (*UploadFilesResponse, error) {
 	payload := UploadFilesRequest{
-		Files: files,
-		ACL:   acl,
+		Files:              files,
+		ACL:                acl,
+		ContentDisposition: "inline",
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
