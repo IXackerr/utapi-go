@@ -125,8 +125,11 @@ func (ut *UtApi) post(path string, body *bytes.Buffer) (*http.Response, error) {
 // 1. Delete files
 // POST /v6/deleteFiles
 // {"fileKeys": ["key1", ...]}
-type DeleteFilesRequest struct {
-	FileKeys  []string `json:"fileKeys"`
+type DeleteFilesByKeysRequest struct {
+	FileKeys []string `json:"fileKeys"`
+}
+
+type DeleteFilesByCustomIdsRequest struct {
 	CustomIds []string `json:"customIds"`
 }
 
@@ -140,12 +143,12 @@ type DeleteFilesResponse struct {
 // {"customIds": ["id1", ...]} or {"fileKeys": ["key1", ...]}
 
 func (ut *UtApi) DeleteFilesByKeys(fileKeys []string) (*DeleteFilesResponse, error) {
-	payload := DeleteFilesRequest{FileKeys: fileKeys, CustomIds: []string{}}
+	payload := DeleteFilesByKeysRequest{FileKeys: fileKeys}
 	return ut.deleteRequest(payload)
 }
 
 func (ut *UtApi) DeleteFilesByCustomIds(customIds []string) (*DeleteFilesResponse, error) {
-	payload := DeleteFilesRequest{FileKeys: []string{}, CustomIds: customIds}
+	payload := DeleteFilesByCustomIdsRequest{CustomIds: customIds}
 	return ut.deleteRequest(payload)
 }
 
