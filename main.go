@@ -68,7 +68,7 @@ func getUploadthingConfig() (*uploadthingConfig, error) {
 	return &uploadthingConfig{
 		Host:    "https://api.uploadthing.com",
 		ApiKey:  os.Getenv("UPLOADTHING_SECRET"),
-		Version: "6.10.0",
+		Version: "7.6.0",
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func NewUtApi() (*UtApi, error) {
 		config:     config,
 		httpClient: &http.Client{},
 		fePackage:  "",
-		beAdapter:  "",
+		beAdapter:  "github.com/IXackerr/utapi-go",
 	}, nil
 }
 
