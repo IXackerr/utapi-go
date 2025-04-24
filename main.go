@@ -129,6 +129,7 @@ type DeleteFilesRequest struct {
 	FileKeys  []string `json:"fileKeys"`
 	CustomIds []string `json:"customIds"`
 }
+
 type DeleteFilesResponse struct {
 	Success      bool `json:"success"`
 	DeletedCount int  `json:"deletedCount"`
@@ -139,12 +140,12 @@ type DeleteFilesResponse struct {
 // {"customIds": ["id1", ...]} or {"fileKeys": ["key1", ...]}
 
 func (ut *UtApi) DeleteFilesByKeys(fileKeys []string) (*DeleteFilesResponse, error) {
-	payload := DeleteFilesRequest{FileKeys: fileKeys}
+	payload := DeleteFilesRequest{FileKeys: fileKeys, CustomIds: []string{}}
 	return ut.deleteRequest(payload)
 }
 
 func (ut *UtApi) DeleteFilesByCustomIds(customIds []string) (*DeleteFilesResponse, error) {
-	payload := DeleteFilesRequest{CustomIds: customIds}
+	payload := DeleteFilesRequest{FileKeys: []string{}, CustomIds: customIds}
 	return ut.deleteRequest(payload)
 }
 
