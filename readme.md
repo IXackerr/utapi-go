@@ -22,7 +22,7 @@ After adding your import statement as below, run `go mod tidy` to install depend
 package main
 
 import (
-    "github.com/jesses-code-adventures/utapi-go"
+    "github.com/IXackerr/utapi-go"
     "os"
     "fmt"
 )
