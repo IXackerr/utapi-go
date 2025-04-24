@@ -126,15 +126,29 @@ func (ut *UtApi) post(path string, body *bytes.Buffer) (*http.Response, error) {
 // POST /v6/deleteFiles
 // {"fileKeys": ["key1", ...]}
 type DeleteFilesRequest struct {
-	FileKeys []string `json:"fileKeys"`
+	FileKeys  []string `json:"fileKeys"`
+	CustomIds []string `json:"customIds"`
 }
 type DeleteFilesResponse struct {
 	Success      bool `json:"success"`
 	DeletedCount int  `json:"deletedCount"`
 }
 
-func (ut *UtApi) DeleteFiles(fileKeys []string) (*DeleteFilesResponse, error) {
+// 2. Delete files by custom ids or keys
+// POST /v6/deleteFiles
+// {"customIds": ["id1", ...]} or {"fileKeys": ["key1", ...]}
+
+func (ut *UtApi) DeleteFilesByKeys(fileKeys []string) (*DeleteFilesResponse, error) {
 	payload := DeleteFilesRequest{FileKeys: fileKeys}
+	return ut.deleteRequest(payload)
+}
+
+func (ut *UtApi) DeleteFilesByCustomIds(customIds []string) (*DeleteFilesResponse, error) {
+	payload := DeleteFilesRequest{CustomIds: customIds}
+	return ut.deleteRequest(payload)
+}
+
+func (ut *UtApi) deleteRequest(payload interface{}) (*DeleteFilesResponse, error) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
