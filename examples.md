@@ -122,6 +122,21 @@ fmt.Println("File uploaded successfully!")
 
 ---
 
+## 8b. Upload Content to Presigned URL (in-memory)
+
+```go
+// presigned is utapi.PresignedPostURLs from GetPresignedUploadUrl
+content := []byte("hello from memory!")
+reader := bytes.NewReader(content)
+err := utapi.UploadContentToPresignedUrl(reader, int64(len(content)), presigned)
+if err != nil {
+    panic(err)
+}
+fmt.Println("Content uploaded successfully!")
+```
+
+---
+
 ## 9. Polling Upload Status (optional)
 
 ```go

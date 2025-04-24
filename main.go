@@ -349,6 +349,26 @@ func (ut *UtApi) GetPresignedUploadUrl(files []UploadFileInfo, acl string) (*Upl
 	return &result, nil
 }
 
+// createMultipartForm creates multipart/form-data body for S3 compatible POST
+func createMultipartForm(content io.Reader, size int64, fileName string, fields map[string]string) (body *bytes.Buffer, contentType string, err error) {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for k, v := range fields {
+		_ = w.WriteField(k, v)
+	}
+	fw, err := w.CreateFormFile("file", fileName)
+	if err != nil {
+		return nil, "", err
+	}
+	if content != nil && size > 0 {
+		if _, err = io.CopyN(fw, content, size); err != nil {
+			return nil, "", err
+		}
+	}
+	w.Close()
+	return &b, w.FormDataContentType(), nil
+}
+
 // Upload file to presigned URL (S3 compatible POST)
 // filePath - path to local file
 // presigned - PresignedPostURLs struct from GetPresignedUploadUrl response
@@ -359,27 +379,22 @@ func UploadFileToPresignedUrl(filePath string, presigned PresignedPostURLs) erro
 	}
 	defer file.Close()
 
-	// Create multipart/form-data
-	var b bytes.Buffer
-	w := multipart.NewWriter(&b)
-	for k, v := range presigned.Fields {
-		_ = w.WriteField(k, v)
-	}
-	fw, err := w.CreateFormFile("file", presigned.FileName)
+	fileInfo, err := file.Stat()
 	if err != nil {
 		return err
 	}
-	if _, err = io.Copy(fw, file); err != nil {
+
+	body, contentType, err := createMultipartForm(file, fileInfo.Size(), presigned.FileName, presigned.Fields)
+	if err != nil {
 		return err
 	}
-	w.Close()
 
 	// Send POST to presigned.Url
-	req, err := http.NewRequest("POST", presigned.Url, &b)
+	req, err := http.NewRequest("POST", presigned.Url, body)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Content-Type", contentType)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -393,12 +408,30 @@ func UploadFileToPresignedUrl(filePath string, presigned PresignedPostURLs) erro
 	return nil
 }
 
-// Пример использования:
-// ut, _ := NewUtApi()
-// files := []UploadFileInfo{{Name: "test.txt", Size: 123, Type: "text/plain"}}
-// resp, _ := ut.GetPresignedUploadUrl(files, "public-read")
-// err := UploadFileToPresignedUrl("/path/to/test.txt", resp.Data[0])
-//
-// После загрузки файла можно опрашивать pollingUrl из presigned.PollingUrl для проверки статуса загрузки.
+// Upload content to presigned URL (S3 compatible POST)
+// content - io.Reader with file data
+// size - content size in bytes
+// presigned - PresignedPostURLs struct from GetPresignedUploadUrl response
+func UploadContentToPresignedUrl(content io.Reader, size int64, presigned PresignedPostURLs) error {
+	body, contentType, err := createMultipartForm(content, size, presigned.FileName, presigned.Fields)
+	if err != nil {
+		return err
+	}
 
-// Можно добавить другие методы по OpenAPI спецификации аналогично
+	req, err := http.NewRequest("POST", presigned.Url, body)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", contentType)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("File upload error: %d: %s", resp.StatusCode, string(respBody))
+	}
+	return nil
+}
